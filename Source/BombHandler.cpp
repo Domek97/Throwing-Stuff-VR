@@ -1,9 +1,12 @@
 #pragma once
 
-#include "BombHandler.h"
-#include "Functions.h"
+#include "../Include/BombHandler.h"
+#include "../Include/Functions.h"
 
 namespace BombHandler {
+    bool heartstoneHit = false;
+    RE::Actor* chainExplosionCause;
+
     int CheckObjectKeyword(int a_formId) {
         if (a_formId != NULL) {
             RE::TESForm* formToTest = RE::TESForm::LookupByID(a_formId);
@@ -72,7 +75,7 @@ namespace BombHandler {
     void CastPotion(RE::AlchemyItem* a_potion, RE::TESObjectREFR& a_target, RE::Actor* a_cause) {
         RE::FormID formID = a_target.GetFormID();
 
-        RE::Actor* targetActor = RE::TESForm::LookupByID<RE::Actor>(a_target.formID);
+        RE::Actor* targetActor = a_target.As<RE::Actor>();
         if (targetActor != NULL && a_cause != NULL) {
             a_cause->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)
                 ->CastSpellImmediate(a_potion, false, targetActor, 1.0f, false, 0.0f, nullptr);
@@ -81,6 +84,17 @@ namespace BombHandler {
                 a_cause->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)
                     ->CastSpellImmediate(Functions::BlameSpell, false, targetActor, 1.0f, false, 0.0f, nullptr);
             }
+        }
+    }
+
+    void DestroyBomb(RE::TESObjectREFRPtr a_objectRef) {
+        a_objectRef->Disable();
+        a_objectRef->SetDelete(true);
+        // blame player for harming others' belongings
+        if (!a_objectRef->IsAnOwner(RE::PlayerCharacter::GetSingleton(), true, false) && Functions::breakingIsCrime) {
+            RE::PlayerCharacter::GetSingleton()->StealAlarm(a_objectRef.get(), a_objectRef->GetBaseObject(),
+                                                            a_objectRef.get()->extraList.GetCount(), 0,
+                                                            a_objectRef->GetActorOwner(), false);
         }
     }
 
@@ -107,7 +121,7 @@ namespace BombHandler {
             }
             bomb->PlaceObjectAtMe(explosionRef, false);
 
-            // process extra functions that need to happen
+            // process extra functions for particular explosions
             switch (expType) {
                 case 8:  // coin
                     if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseLarge")) {
@@ -124,14 +138,7 @@ namespace BombHandler {
                     break;
             }
             if (expType != 4 && expType != 14) {
-                a_objectRef->Disable();
-                a_objectRef->SetDelete(true);
-                // blame player for harming others' belongings
-                if (!a_objectRef->IsAnOwner(RE::PlayerCharacter::GetSingleton(), true, false)) {
-                    RE::PlayerCharacter::GetSingleton()->StealAlarm(a_objectRef.get(), a_objectRef->GetBaseObject(),
-                                                                    a_objectRef.get()->extraList.GetCount(), 0,
-                                                                    a_objectRef->GetActorOwner(), false);
-                }
+                DestroyBomb(a_objectRef);
             }
         }
         return expType;

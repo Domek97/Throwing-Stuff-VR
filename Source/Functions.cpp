@@ -1,5 +1,5 @@
 #pragma once
-#include "Functions.h"
+#include "../Include/Functions.h"
 
 namespace logger = SKSE::log;
 
@@ -13,6 +13,8 @@ namespace Functions {
     bool chainExplosions = false;
     bool potionChainExplosions = false;
     bool followersGetAngry = false;
+    bool breakingIsCrime = false;
+    bool throwingDispelsInvis = false;
 
     RE::BGSListForm* explosionFormList;
     RE::BGSListForm* chainableExplosionsFormList;
@@ -22,14 +24,17 @@ namespace Functions {
     RE::TESObjectACTI* CoinExplosion;
     RE::TESObjectACTI* CoinExplosionLarge;
     RE::SpellItem* BlameSpell;
+    RE::SpellItem* SilverSpell;
+    RE::SpellItem* HeartSpell;
 
     // a_form: the item whose keywords we're checking
     // a_keyword: the keyword we're comparing against
     bool HasKeyword(RE::TESForm* a_form, std::string a_keyword) {
         const auto keywordForm = a_form->As<RE::BGSKeywordForm>();
-
+        std::string name = a_form->GetName();
         if (keywordForm != NULL) {
-            for (RE::BGSKeyword* keyword : keywordForm->GetKeywords()) {
+            std::span<RE::BGSKeyword*> keywords = keywordForm->GetKeywords();
+            for (RE::BGSKeyword* keyword : keywords) {
                 if (keyword->GetFormEditorID() == a_keyword) {
                     return true;
                 }
@@ -57,10 +62,16 @@ namespace Functions {
         return false;
     }
 
+    bool isCoinPurse(RE::TESForm* a_form) { 
+        return Functions::HasKeyword(a_form, "PurseLarge") || Functions::HasKeyword(a_form, "PurseMedium") ||
+                Functions::HasKeyword(a_form, "PurseSmall") || Functions::HasKeyword(a_form, "CoinPurse");
+    }
+    
     bool hasDestruction(RE::TESObjectREFRPtr a_target) {
         RE::TESObjectMISC* targetMisc;
         RE::AlchemyItem* targetAlchemy;
         RE::IngredientItem* targetIngredient;
+        RE::TESFlora* targetFlora;
 
         switch (a_target->GetBaseObject()->GetFormType()) {
             case RE::FormType::AlchemyItem:
@@ -75,6 +86,9 @@ namespace Functions {
                 targetIngredient = a_target->GetBaseObject()->As<RE::IngredientItem>();
                 return targetIngredient->BGSDestructibleObjectForm::data != nullptr;
                 break;
+            case RE::FormType::Flora:
+                targetFlora = a_target->GetBaseObject()->As<RE::TESFlora>();
+                return targetFlora->BGSDestructibleObjectForm::data != nullptr;
             default:
                 return false;
                 break;

@@ -12,6 +12,8 @@ namespace Functions {
     extern bool chainExplosions;
     extern bool potionChainExplosions;
     extern bool followersGetAngry;
+    extern bool breakingIsCrime;
+    extern bool throwingDispelsInvis;
 
     extern RE::BGSListForm* explosionFormList;
     extern RE::BGSListForm* chainableExplosionsFormList;
@@ -21,15 +23,17 @@ namespace Functions {
     extern RE::TESObjectACTI* CoinExplosion;
     extern RE::TESObjectACTI* CoinExplosionLarge;
     extern RE::SpellItem* BlameSpell;
+    extern RE::SpellItem* SilverSpell;
+    extern RE::SpellItem* HeartSpell;
 
     // a_form: the item whose keywords we're checking
     // a_keyword: the keyword we're comparing against
     bool HasKeyword(RE::TESForm* a_form, std::string a_keyword);
-
     // if chaining explosions option is set, return true if we're not chaining potions and formId is not alcohol, blood, potion or poison - or if we are chaining potions
     bool allowChainExplosion(RE::FormID a_formId);
 
     bool isExplosion(RE::FormID a_formId);
+    bool isCoinPurse(RE::TESForm* a_form); 
 
     bool hasDestruction(RE::TESObjectREFRPtr a_target);
 }

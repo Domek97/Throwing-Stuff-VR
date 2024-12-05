@@ -2,12 +2,17 @@
 
 namespace BombHandler {
 
+    extern bool heartstoneHit;
+    extern RE::Actor* chainExplosionCause;
+
     int CheckObjectKeyword(int a_formId);
 
     // potion: the potion whose effects will be applied
     // target: the actor that will drink the potion
     // cause: the actor that caused the potion to explode
     void CastPotion(RE::AlchemyItem* a_potion, RE::TESObjectREFR& a_target, RE::Actor* a_cause);
+
+    void DestroyBomb(RE::TESObjectREFRPtr a_objectRef);
 
     // a_objectRef: the object exploding
     // a_cause: the actor who caused the object to explode
