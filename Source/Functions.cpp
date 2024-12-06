@@ -8,13 +8,15 @@ namespace Functions {
     bool preventingHits = false;
     bool onlyPlayerHits = false;
     bool isDelete = false;
-    bool hitCheck = false;
-    bool explodeCheck = false;
+    bool hitCheck = false; // used when preventing hits
+    bool explodeCheck = false; // used when preventing chain explosions
     bool chainExplosions = false;
     bool potionChainExplosions = false;
     bool followersGetAngry = false;
     bool breakingIsCrime = false;
     bool throwingDispelsInvis = false;
+    //bool onlyExplodeOnHit = false;
+    //int objectHitId = -1;
 
     RE::BGSListForm* explosionFormList;
     RE::BGSListForm* chainableExplosionsFormList;
@@ -72,6 +74,7 @@ namespace Functions {
         RE::AlchemyItem* targetAlchemy;
         RE::IngredientItem* targetIngredient;
         RE::TESFlora* targetFlora;
+        RE::TESSoulGem* targetSG;
 
         switch (a_target->GetBaseObject()->GetFormType()) {
             case RE::FormType::AlchemyItem:
@@ -89,6 +92,9 @@ namespace Functions {
             case RE::FormType::Flora:
                 targetFlora = a_target->GetBaseObject()->As<RE::TESFlora>();
                 return targetFlora->BGSDestructibleObjectForm::data != nullptr;
+            case RE::FormType::SoulGem:
+                targetSG = a_target->GetBaseObject()->As<RE::TESSoulGem>();
+                return targetSG->BGSDestructibleObjectForm::data != nullptr;
             default:
                 return false;
                 break;

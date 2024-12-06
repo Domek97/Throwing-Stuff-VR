@@ -40,7 +40,7 @@ namespace BombHandler {
 
             if (Functions::HasKeyword(formToTest, "Holybomb")) return 7;
 
-            if (Functions::HasKeyword(formToTest, "Materialglass")) return 2;
+            if (Functions::HasKeyword(formToTest, "MaterialGlass")) return 2;
 
             if (Functions::HasKeyword(formToTest, "nullWhite")) return 15;
 
@@ -102,45 +102,60 @@ namespace BombHandler {
     // a_cause: the actor who caused the object to explode. will be nullptr if called from OnDestructionStageChanged, as
     // only player will be able to do that
     int Explode(RE::TESObjectREFRPtr a_objectRef, RE::Actor* a_cause) {
-        RE::TESObjectREFRPtr bomb = a_objectRef->PlaceObjectAtMe(Functions::marker, false);
-        bomb.get()->MoveToNode(a_objectRef.get(), a_objectRef->Get3D());
+            RE::TESObjectREFRPtr bomb = a_objectRef->PlaceObjectAtMe(Functions::marker, false);
+            bomb.get()->MoveToNode(a_objectRef.get(), a_objectRef->Get3D());
 
-        int expType = CheckObjectKeyword(a_objectRef.get()->GetBaseObject()->GetFormID());
+            int expType = CheckObjectKeyword(a_objectRef.get()->GetBaseObject()->GetFormID());
 
-        if (expType != -1) {
-            RE::TESBoundObject* explosionRef = Functions::explosionFormList->forms[expType]->As<RE::TESBoundObject>();
+            if (expType != -1) {
+                RE::TESBoundObject* explosionRef =
+                Functions::explosionFormList->forms[expType]->As<RE::TESBoundObject>();
 
-            if (expType == 11 or expType == 12) {
-                RE::AlchemyItem* formPotion =
-                    RE::TESForm::LookupByID<RE::AlchemyItem>(a_objectRef.get()->GetBaseObject()->GetFormID());
+                if (expType == 11 or expType == 12) {
+                    RE::AlchemyItem* formPotion =
+                        RE::TESForm::LookupByID<RE::AlchemyItem>(a_objectRef.get()->GetBaseObject()->GetFormID());
 
-                RE::TES::GetSingleton()->ForEachReferenceInRange(bomb.get(), 200.0, [&](RE::TESObjectREFR& a_ref) {
-                    CastPotion(formPotion, a_ref, a_cause);
-                    return RE::BSContainer::ForEachResult::kContinue;
-                });
+                    RE::TES::GetSingleton()->ForEachReferenceInRange(bomb.get(), 200.0, [&](RE::TESObjectREFR& a_ref)
+                    {
+                        CastPotion(formPotion, a_ref, a_cause);
+                        return RE::BSContainer::ForEachResult::kContinue;
+                    });
+                }
+                if (expType == 0) {
+                    RE::TES::GetSingleton()->ForEachReferenceInRange(bomb.get(), 200.0, [&](RE::TESObjectREFR& a_ref) {
+                        RE::Actor* targetActor = a_ref.As<RE::Actor>();
+                        if (targetActor != nullptr && a_cause->IsPlayerRef() && !targetActor->IsPlayerRef() &&
+                            (!targetActor->IsPlayerTeammate() || Functions::followersGetAngry)) {
+                            a_cause->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)
+                                ->CastSpellImmediate(Functions::BlameSpell, false, targetActor, 1.0f, false, 0.0f,
+                                                     nullptr);
+                        }
+                        return RE::BSContainer::ForEachResult::kContinue;
+                    });
+
+                }
+                bomb->PlaceObjectAtMe(explosionRef, false);
+
+                // process extra functions for particular explosions
+                switch (expType) {
+                    case 8:  // coin
+                        if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseLarge")) {
+                            a_objectRef->PlaceObjectAtMe(Functions::CoinExplosionLarge, true);
+                        } else if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseMedium")) {
+                            a_objectRef->PlaceObjectAtMe(Functions::CoinExplosion, true);
+                        } else if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseSmall")) {
+                            a_objectRef->PlaceObjectAtMe(Functions::CoinExplosionSmall, true);
+                        }
+                        break;
+                    case 9:  // dwarven oil
+                        bomb->PlaceObjectAtMe(Functions::OilPool, true);
+                        // Papyrus - _SOL_OilPoolScript: MoveToNearestNavMesh()
+                        break;
+                }
+                if (expType != 4 && expType != 14) {
+                    DestroyBomb(a_objectRef);
+                }
             }
-            bomb->PlaceObjectAtMe(explosionRef, false);
-
-            // process extra functions for particular explosions
-            switch (expType) {
-                case 8:  // coin
-                    if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseLarge")) {
-                        a_objectRef->PlaceObjectAtMe(Functions::CoinExplosionLarge, true);
-                    } else if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseMedium")) {
-                        a_objectRef->PlaceObjectAtMe(Functions::CoinExplosion, true);
-                    } else if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseSmall")) {
-                        a_objectRef->PlaceObjectAtMe(Functions::CoinExplosionSmall, true);
-                    }
-                    break;
-                case 9:  // dwarven oil
-                    bomb->PlaceObjectAtMe(Functions::OilPool, true);
-                    // Papyrus - _SOL_OilPoolScript: MoveToNearestNavMesh()
-                    break;
-            }
-            if (expType != 4 && expType != 14) {
-                DestroyBomb(a_objectRef);
-            }
+            return expType;
         }
-        return expType;
-    }
 }

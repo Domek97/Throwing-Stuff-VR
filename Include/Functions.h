@@ -14,6 +14,8 @@ namespace Functions {
     extern bool followersGetAngry;
     extern bool breakingIsCrime;
     extern bool throwingDispelsInvis;
+    //extern bool onlyExplodeOnHit;
+    //extern int objectHitId;
 
     extern RE::BGSListForm* explosionFormList;
     extern RE::BGSListForm* chainableExplosionsFormList;
