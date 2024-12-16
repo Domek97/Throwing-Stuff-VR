@@ -49,7 +49,6 @@ public:
     
     RE::BSEventNotifyControl ProcessEvent(const RE::TESHitEvent* event, RE::BSTEventSource<RE::TESHitEvent>*) {
             //Functions::objectHitId = event->source; 
-            //logger::info("onhit");
             RE::BGSExplosion* sourceExplosion = RE::TESForm::LookupByID<RE::BGSExplosion>(event->source);
             std::string test = sourceExplosion != nullptr ? sourceExplosion->GetFullName() : "null";
             std::string target = event->target->GetDisplayFullName();
@@ -61,6 +60,7 @@ public:
             std::string name = RE::TESForm::LookupByID(event->target->formID)->GetName();
             // only process onhit and set explodeCheck for items that are destructible
             if (Functions::hasDestruction(event->target)) {
+                logger::info("onhit {}", event->target->GetFormID());
                 // if item with gold value is hit and we are preventing hits, set hitcheck
                 bool test = Functions::isCoinPurse(event->target->GetBaseObject());
                 if (event->source != NULL &&
@@ -70,14 +70,14 @@ public:
                      (event->cause != nullptr && !event->cause->IsPlayerRef() && Functions::onlyPlayerHits)) &&
                     (sourceExplosion == nullptr || sourceExplosion->data.damage > 0)) {
                     //logger::info("set hitcheck true. source {}, target {}, type {}", sourceForm->GetName(), event->target->GetName(), sourceForm->GetFormType());
-                    Functions::hitCheck = true;
-                } /*else {
+                    Functions::hitCheck.insert(event->target->formID);
+                } else {
                     logger::info("hitcheck not set. source {}, target {}, type {}", sourceForm->GetName(), event->target->GetName(), sourceForm->GetFormType());
-                }*/
+                }
                 // if the player hits with a spell, we want the aoe to explode items too. OnDestructionChanged only
                 // triggers on items when directly hit by spells
-                if ((!Functions::preventingHits || Functions::allowChainExplosion(event->source)) &&
-                    (!Functions::isExplosion(event->source) || Functions::allowChainExplosion(event->source)) &&
+                if (!(Functions::preventingHits && !Functions::isExplosion(event->source)) &&
+                    (Functions::isExplosion(event->source) && Functions::allowChainExplosion(event->source)) &&
                     ((Functions::onlyPlayerHits && event->cause == nullptr || event->cause->IsPlayerRef()) ||
                      !Functions::onlyPlayerHits)) {
                     //logger::info("explosion");
@@ -99,7 +99,7 @@ public:
                 }
                 // prevent spell aoes from marking hitcheck
                 if (event->cause == nullptr && !Functions::isExplosion(event->source)) {
-                    Functions::hitCheck = false;
+                    Functions::hitCheck.erase(event->target->formID);
                 }
             } else if (sourceForm != nullptr && Functions::HasKeyword(sourceForm, "MaterialSilver") &&
                        (RE::PlayerCharacter::GetSingleton()->GetEquippedObject(true) == NULL ||
@@ -120,14 +120,15 @@ public:
         return RE::BSEventNotifyControl::kContinue;
     }
     // End OnHit
+
     // OnDestructionStageChanged event
     RE::BSEventNotifyControl ProcessEvent(const RE::TESDestructionStageChangedEvent* event,
                                           RE::BSTEventSource<RE::TESDestructionStageChangedEvent>*) {
         //if (!(Functions::onlyExplodeOnHit) || event->target->GetBaseObject()->formID == Functions::objectHitId) {
-            logger::info("destructionstagechanged");
-            if (Functions::hitCheck || Functions::explodeCheck) {
+            logger::info("destructionstagechanged {}", event->target->GetFormID());
+            if (Functions::hitCheck.contains((event->target->formID)) || Functions::explodeCheck) {
                 logger::info("prevented destruction - explodecheck {} hitcheck {}", Functions::explodeCheck,
-                                Functions::hitCheck);
+                             Functions::hitCheck.contains(event->target->formID));
             } else {
                 logger::info("DESTRUCTION!!");
                 BombHandler::chainExplosionCause = RE::PlayerCharacter::GetSingleton()->As<RE::Actor>();
@@ -139,7 +140,7 @@ public:
                 //Functions::objectHitId = -1;
             }
             Functions::explodeCheck = false;
-            Functions::hitCheck = false;
+            Functions::hitCheck.erase(event->target->formID);
 
             if (BombHandler::heartstoneHit &&
                 Functions::HasKeyword(event->target->As<RE::TESForm>(), "isHeartstone")) {
@@ -180,13 +181,12 @@ void InitValues() {
     Functions::chainableExplosionsFormList = RE::TESForm::LookupByEditorID<RE::BGSListForm>("_SOL_ChainableExplosionsFL");
     Functions::marker = RE::TESForm::LookupByEditorID<RE::TESObjectMISC>("_SOL_MarkerBox");
     Functions::OilPool = RE::TESForm::LookupByEditorID<RE::TESObjectACTI>("_SOL_OilPool");
-    Functions::CoinExplosion = RE::TESForm::LookupByEditorID<RE::TESObjectACTI>("_SOL_CoinExplosion");
-    Functions::CoinExplosionSmall = RE::TESForm::LookupByEditorID<RE::TESObjectACTI>("_SOL_CoinExplosionSmall");
-    Functions::CoinExplosionLarge = RE::TESForm::LookupByEditorID<RE::TESObjectACTI>("_SOL_CoinExplosionLarge");
     Functions::BlameSpell = RE::TESForm::LookupByEditorID<RE::SpellItem>("_SOL_BlameSpell");
     Functions::SilverSpell = RE::TESForm::LookupByEditorID<RE::SpellItem>("_SOL_SilverDmgSpell");
     Functions::HeartSpell = RE::TESForm::LookupByEditorID<RE::SpellItem>("_SOL_HeartSpell");
-    
+    Functions::GoldCoin = RE::TESForm::LookupByEditorID<RE::TESObjectMISC>("Gold001");
+    Functions::ImpulseSm = RE::TESForm::LookupByEditorID<RE::BGSExplosion>("_SOL_ImpulseSm");
+
     std::string configPath = std::filesystem::current_path().string() + "\\Data\\SKSE\\Plugins\\ThrowingStuffVR.ini";
 
     CSimpleIniA ini;

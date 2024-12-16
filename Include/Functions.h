@@ -1,4 +1,5 @@
 #pragma once
+#include <unordered_set>
 
 namespace logger = SKSE::log;
 
@@ -7,7 +8,7 @@ namespace Functions {
     extern bool preventingHits;
     extern bool onlyPlayerHits;
     extern bool isDelete;
-    extern bool hitCheck;
+    extern std::unordered_set<RE::FormID> hitCheck;  // used when preventing hits
     extern bool explodeCheck;
     extern bool chainExplosions;
     extern bool potionChainExplosions;
@@ -20,10 +21,10 @@ namespace Functions {
     extern RE::BGSListForm* explosionFormList;
     extern RE::BGSListForm* chainableExplosionsFormList;
     extern RE::TESObjectMISC* marker;
+    extern RE::TESObjectMISC* GoldCoin;
     extern RE::TESObjectACTI* OilPool;
-    extern RE::TESObjectACTI* CoinExplosionSmall;
-    extern RE::TESObjectACTI* CoinExplosion;
-    extern RE::TESObjectACTI* CoinExplosionLarge;
+    extern RE::BGSExplosion* ImpulseSm;
+
     extern RE::SpellItem* BlameSpell;
     extern RE::SpellItem* SilverSpell;
     extern RE::SpellItem* HeartSpell;

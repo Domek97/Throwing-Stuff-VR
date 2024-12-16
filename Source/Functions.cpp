@@ -1,5 +1,6 @@
 #pragma once
 #include "../Include/Functions.h"
+#include <unordered_set>
 
 namespace logger = SKSE::log;
 
@@ -8,7 +9,7 @@ namespace Functions {
     bool preventingHits = false;
     bool onlyPlayerHits = false;
     bool isDelete = false;
-    bool hitCheck = false; // used when preventing hits
+    std::unordered_set<RE::FormID> hitCheck;  // used when preventing hits
     bool explodeCheck = false; // used when preventing chain explosions
     bool chainExplosions = false;
     bool potionChainExplosions = false;
@@ -21,13 +22,13 @@ namespace Functions {
     RE::BGSListForm* explosionFormList;
     RE::BGSListForm* chainableExplosionsFormList;
     RE::TESObjectMISC* marker;
+    RE::TESObjectMISC* GoldCoin;
     RE::TESObjectACTI* OilPool;
-    RE::TESObjectACTI* CoinExplosionSmall;
-    RE::TESObjectACTI* CoinExplosion;
-    RE::TESObjectACTI* CoinExplosionLarge;
     RE::SpellItem* BlameSpell;
     RE::SpellItem* SilverSpell;
     RE::SpellItem* HeartSpell;
+    RE::BGSExplosion* ImpulseSm;
+
 
     // a_form: the item whose keywords we're checking
     // a_keyword: the keyword we're comparing against
@@ -66,7 +67,7 @@ namespace Functions {
 
     bool isCoinPurse(RE::TESForm* a_form) { 
         return Functions::HasKeyword(a_form, "PurseLarge") || Functions::HasKeyword(a_form, "PurseMedium") ||
-                Functions::HasKeyword(a_form, "PurseSmall") || Functions::HasKeyword(a_form, "CoinPurse");
+                Functions::HasKeyword(a_form, "PurseSmall") || Functions::HasKeyword(a_form, "onmoPurse");
     }
     
     bool hasDestruction(RE::TESObjectREFRPtr a_target) {

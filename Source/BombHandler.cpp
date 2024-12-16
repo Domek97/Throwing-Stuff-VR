@@ -16,13 +16,17 @@ namespace BombHandler {
             if (Functions::HasKeyword(formToTest, "isBlood") && formPotion) return 1;  // blood potion
 
             if (formPotion) {
-                if (formPotion->data.flags.any(RE::AlchemyItem::AlchemyFlag::kPoison) == true) return 11;  // poison
+                if (formPotion->data.flags.any(RE::AlchemyItem::AlchemyFlag::kPoison) == true ||
+                    Functions::HasKeyword(formToTest, "Poison"))
+                    return 11;  // poison
 
-                if (formPotion->data.flags.any(RE::AlchemyItem::AlchemyFlag::kFoodItem) == false) return 12;  // potion
+                if (formPotion->data.flags.any(RE::AlchemyItem::AlchemyFlag::kFoodItem) == false ||
+                    Functions::HasKeyword(formToTest, "Potion"))
+                    return 12;  // potion
             }
 
             if (Functions::HasKeyword(formToTest, "PurseLarge") || Functions::HasKeyword(formToTest, "PurseMedium") ||
-                Functions::HasKeyword(formToTest, "PurseSmall"))
+                Functions::HasKeyword(formToTest, "PurseSmall") || Functions::HasKeyword(formToTest, "onmoPurse"))
 
                 return 8;
 
@@ -137,15 +141,34 @@ namespace BombHandler {
                 bomb->PlaceObjectAtMe(explosionRef, false);
 
                 // process extra functions for particular explosions
+
+                std::random_device rd;
+                std::mt19937 gen(rd());
+                int i = 0;
+                int amount;
                 switch (expType) {
                     case 8:  // coin
-                        if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseLarge")) {
-                            a_objectRef->PlaceObjectAtMe(Functions::CoinExplosionLarge, true);
+                        if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "onmoPurse")) {
+                            std::string name = a_objectRef->GetDisplayFullName();
+                            amount = atoi(name.substr(name.find_first_of("(") + 1, (name.find_first_of(")") - name.find_first_of("("))).c_str());
+                        } else if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseLarge")) {
+                            std::uniform_int_distribution<> distrib(20, 60);
+                            amount = distrib(gen);
+                            // a_objectRef->PlaceObjectAtMe(Functions::CoinExplosionLarge, false);
                         } else if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseMedium")) {
-                            a_objectRef->PlaceObjectAtMe(Functions::CoinExplosion, true);
+                            //a_objectRef->PlaceObjectAtMe(Functions::CoinExplosion, false);
+                            std::uniform_int_distribution<> distrib(10, 40);
+                            amount = distrib(gen);
                         } else if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseSmall")) {
-                            a_objectRef->PlaceObjectAtMe(Functions::CoinExplosionSmall, true);
+                            std::uniform_int_distribution<> distrib(5, 20);
+                            amount = distrib(gen);
+                            // a_objectRef->PlaceObjectAtMe(Functions::CoinExplosionSmall, false);
                         }
+                        while (i < amount) {
+                            a_objectRef->PlaceObjectAtMe(Functions::GoldCoin, true);
+                            i++;
+                        }
+                        a_objectRef->PlaceObjectAtMe(Functions::ImpulseSm, false);
                         break;
                     case 9:  // dwarven oil
                         bomb->PlaceObjectAtMe(Functions::OilPool, true);
