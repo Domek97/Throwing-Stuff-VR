@@ -103,8 +103,7 @@ namespace BombHandler {
     }
 
     // a_objectRef: the object exploding
-    // a_cause: the actor who caused the object to explode. will be nullptr if called from OnDestructionStageChanged, as
-    // only player will be able to do that
+    // a_cause: the actor who caused the object to explode
     int Explode(RE::TESObjectREFRPtr a_objectRef, RE::Actor* a_cause) {
             RE::TESObjectREFRPtr bomb = a_objectRef->PlaceObjectAtMe(Functions::marker, false);
             bomb.get()->MoveToNode(a_objectRef.get(), a_objectRef->Get3D());
@@ -125,19 +124,6 @@ namespace BombHandler {
                         return RE::BSContainer::ForEachResult::kContinue;
                     });
                 }
-                if (expType == 0) {
-                    RE::TES::GetSingleton()->ForEachReferenceInRange(bomb.get(), 200.0, [&](RE::TESObjectREFR& a_ref) {
-                        RE::Actor* targetActor = a_ref.As<RE::Actor>();
-                        if (targetActor != nullptr && a_cause->IsPlayerRef() && !targetActor->IsPlayerRef() &&
-                            (!targetActor->IsPlayerTeammate() || Functions::followersGetAngry)) {
-                            a_cause->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)
-                                ->CastSpellImmediate(Functions::BlameSpell, false, targetActor, 1.0f, false, 0.0f,
-                                                     nullptr);
-                        }
-                        return RE::BSContainer::ForEachResult::kContinue;
-                    });
-
-                }
                 bomb->PlaceObjectAtMe(explosionRef, false);
 
                 // process extra functions for particular explosions
@@ -147,6 +133,17 @@ namespace BombHandler {
                 int i = 0;
                 int amount;
                 switch (expType) {
+                    case 0:  // alcohol
+                        RE::TES::GetSingleton()->ForEachReferenceInRange(bomb.get(), 200.0, [&](RE::TESObjectREFR& a_ref) {
+                                RE::Actor* targetActor = a_ref.As<RE::Actor>();
+                                if (targetActor != nullptr && a_cause->IsPlayerRef() && !targetActor->IsPlayerRef() &&
+                                    (!targetActor->IsPlayerTeammate() || Functions::followersGetAngry)) {
+                                    a_cause->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)
+                                        ->CastSpellImmediate(Functions::BlameSpell, false, targetActor, 1.0f, false,0.0f, nullptr);
+                                }
+                                return RE::BSContainer::ForEachResult::kContinue;
+                            });
+                        break;
                     case 8:  // coin
                         if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "onmoPurse")) {
                             std::string name = a_objectRef->GetDisplayFullName();
@@ -154,15 +151,12 @@ namespace BombHandler {
                         } else if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseLarge")) {
                             std::uniform_int_distribution<> distrib(20, 60);
                             amount = distrib(gen);
-                            // a_objectRef->PlaceObjectAtMe(Functions::CoinExplosionLarge, false);
                         } else if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseMedium")) {
-                            //a_objectRef->PlaceObjectAtMe(Functions::CoinExplosion, false);
                             std::uniform_int_distribution<> distrib(10, 40);
                             amount = distrib(gen);
                         } else if (Functions::HasKeyword(a_objectRef->GetBaseObject(), "PurseSmall")) {
                             std::uniform_int_distribution<> distrib(5, 20);
                             amount = distrib(gen);
-                            // a_objectRef->PlaceObjectAtMe(Functions::CoinExplosionSmall, false);
                         }
                         while (i < amount) {
                             a_objectRef->PlaceObjectAtMe(Functions::GoldCoin, true);
@@ -177,6 +171,9 @@ namespace BombHandler {
                 }
                 if (expType != 4 && expType != 14) {
                     DestroyBomb(a_objectRef);
+                    if (expType != 8) { // coin already has impulse, doesn't need this one
+                        bomb->PlaceObjectAtMe(Functions::ImpulseTiny, false);
+                    }
                 }
             }
             return expType;

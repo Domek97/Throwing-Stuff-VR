@@ -28,7 +28,7 @@ namespace Functions {
     RE::SpellItem* SilverSpell;
     RE::SpellItem* HeartSpell;
     RE::BGSExplosion* ImpulseSm;
-
+    RE::BGSExplosion* ImpulseTiny;
 
     // a_form: the item whose keywords we're checking
     // a_keyword: the keyword we're comparing against

@@ -186,6 +186,7 @@ void InitValues() {
     Functions::HeartSpell = RE::TESForm::LookupByEditorID<RE::SpellItem>("_SOL_HeartSpell");
     Functions::GoldCoin = RE::TESForm::LookupByEditorID<RE::TESObjectMISC>("Gold001");
     Functions::ImpulseSm = RE::TESForm::LookupByEditorID<RE::BGSExplosion>("_SOL_ImpulseSm");
+    Functions::ImpulseTiny = RE::TESForm::LookupByEditorID<RE::BGSExplosion>("_SOL_ImpulseTiny");
 
     std::string configPath = std::filesystem::current_path().string() + "\\Data\\SKSE\\Plugins\\ThrowingStuffVR.ini";
 
