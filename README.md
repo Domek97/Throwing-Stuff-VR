@@ -8,5 +8,5 @@
       Value: `C:\path\to\wherever\your\vcpkg\folder\is`
 
 # To build
--Clone this repository using git OR download it as a .zip
--Replace the code in "root/build/debug/vcpkg_installed/x64-windows-static/include/RE/M/MagicTarget.h" with the version in [CommonLibVR](https://github.com/beef-buns/CommonLibVR/blob/c137dd1c6a8d94fc102da651106006aeac416b55/include/RE/M/MagicTarget.h)
+- Clone this repository using git OR download it as a .zip
+- Replace the code in "root/build/debug/vcpkg_installed/x64-windows-static/include/RE/M/MagicTarget.h" with the version in [CommonLibVR](https://github.com/alandtse/CommonLibVR/blob/vr/include/RE/M/MagicTarget.h)
