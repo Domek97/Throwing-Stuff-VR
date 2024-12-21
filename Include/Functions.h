@@ -24,6 +24,7 @@ namespace Functions {
     extern RE::TESObjectMISC* GoldCoin;
     extern RE::TESObjectACTI* OilPool;
     extern RE::BGSExplosion* ImpulseSm;
+    extern RE::BGSExplosion* ImpulseTiny;
 
     extern RE::SpellItem* BlameSpell;
     extern RE::SpellItem* SilverSpell;

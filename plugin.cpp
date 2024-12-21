@@ -101,7 +101,10 @@ public:
                 if (event->cause == nullptr && !Functions::isExplosion(event->source)) {
                     Functions::hitCheck.erase(event->target->formID);
                 }
-            } else if (sourceForm != nullptr && Functions::HasKeyword(sourceForm, "MaterialSilver") &&
+            } else if (sourceForm != nullptr &&
+                       (Functions::HasKeyword(sourceForm, "WeaponMaterialSilver") ||
+                        Functions::HasKeyword(sourceForm, "MaterialSilver") ||
+                        Functions::HasKeyword(sourceForm, "MaterialHoly")) &&
                        (RE::PlayerCharacter::GetSingleton()->GetEquippedObject(true) == NULL ||
                         RE::PlayerCharacter::GetSingleton()->GetEquippedObject(true)->formID != event->source) &&
                        (RE::PlayerCharacter::GetSingleton()->GetEquippedObject(false) == NULL ||
