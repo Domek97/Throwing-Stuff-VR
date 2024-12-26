@@ -17,11 +17,11 @@ namespace BombHandler {
 
             if (formPotion) {
                 if (formPotion->data.flags.any(RE::AlchemyItem::AlchemyFlag::kPoison) == true ||
-                    Functions::HasKeyword(formToTest, "Poison"))
+                    Functions::HasKeyword(formToTest, "Poison") || Functions::HasKeyword(formToTest, "IsPoison"))
                     return 11;  // poison
 
                 if (formPotion->data.flags.any(RE::AlchemyItem::AlchemyFlag::kFoodItem) == false ||
-                    Functions::HasKeyword(formToTest, "Potion"))
+                    Functions::HasKeyword(formToTest, "Potion") || Functions::HasKeyword(formToTest, "isPotion"))
                     return 12;  // potion
             }
 
