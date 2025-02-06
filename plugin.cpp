@@ -45,7 +45,6 @@ public:
 
 
     // OnHit event
-    // TODO: get the game to recognize onhits for potions and melee attacks
     
     RE::BSEventNotifyControl ProcessEvent(const RE::TESHitEvent* event, RE::BSTEventSource<RE::TESHitEvent>*) {
             //Functions::objectHitId = event->source; 
@@ -57,9 +56,8 @@ public:
                 causePtr = RE::TESForm::LookupByID<RE::Actor>(event->cause->formID);
             }
             RE::TESForm* sourceForm = RE::TESForm::LookupByID(event->source);
-            std::string name = RE::TESForm::LookupByID(event->target->formID)->GetName();
             // only process onhit and set explodeCheck for items that are destructible
-            if (Functions::hasDestruction(event->target)) {
+            if (Functions::hasDestruction(event->target) || Functions::HasKeyword(event->target->GetBaseObject(), "VendorItemSoulGem")) {
                 logger::info("onhit {}", event->target->GetFormID());
                 // if item with gold value is hit and we are preventing hits, set hitcheck
                 bool test = Functions::isCoinPurse(event->target->GetBaseObject());
@@ -77,7 +75,7 @@ public:
                 // if the player hits with a spell, we want the aoe to explode items too. OnDestructionChanged only
                 // triggers on items when directly hit by spells
                 if (!(Functions::preventingHits && !Functions::isExplosion(event->source)) &&
-                    (Functions::isExplosion(event->source) && Functions::allowChainExplosion(event->source)) &&
+                    ((Functions::isExplosion(event->source) && Functions::allowChainExplosion(event->source)) || Functions::HasKeyword(event->target->GetBaseObject(), "VendorItemSoulGem")) &&
                     ((Functions::onlyPlayerHits && event->cause == nullptr || event->cause->IsPlayerRef()) ||
                      !Functions::onlyPlayerHits)) {
                     //logger::info("explosion");
