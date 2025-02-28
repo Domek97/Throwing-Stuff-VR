@@ -1,22 +1,18 @@
 #pragma once
 #include "../Include/Functions.h"
+#include "../Include/Config.h"
 #include <unordered_set>
+
 
 namespace logger = SKSE::log;
 
 namespace Functions {
     
-    bool preventingHits = false;
-    bool onlyPlayerHits = false;
+
     bool isDelete = false;
     std::unordered_set<RE::FormID> hitCheck;  // used when preventing hits
     bool explodeCheck = false; // used when preventing chain explosions
-    bool chainExplosions = false;
-    bool potionChainExplosions = false;
-    bool followersGetAngry = false;
-    bool breakingIsCrime = false;
-    bool throwingDispelsInvis = false;
-    //bool onlyExplodeOnHit = false;
+
     //int objectHitId = -1;
 
     RE::BGSListForm* explosionFormList;
@@ -47,13 +43,17 @@ namespace Functions {
         return false;
     }
 
-    // if chaining explosions option is set, return true if we're not chaining potions and formId is not alcohol, blood, potion or poison - or if we are chaining potions
+    // if chaining explosions option is true, 
+    // allow chain explosion if we are also allowing potion chains, or 
+    // if we're not allowing potion chains and formId is not alcohol, blood, potion or poison
     bool allowChainExplosion(RE::FormID a_formId) {
-        return (chainExplosions && ((!potionChainExplosions && a_formId != chainableExplosionsFormList->forms[0]->GetFormID() &&
+        return (Config::chainExplosions &&
+                (Config::potionChainExplosions ||
+                 (!Config::potionChainExplosions &&
+                                       a_formId != chainableExplosionsFormList->forms[0]->GetFormID() &&
                 a_formId != chainableExplosionsFormList->forms[1]->GetFormID() &&
                 a_formId != chainableExplosionsFormList->forms[8]->GetFormID() &&
-                a_formId != chainableExplosionsFormList->forms[9]->GetFormID()) ||
-               potionChainExplosions));
+                a_formId != chainableExplosionsFormList->forms[9]->GetFormID())));
     }
 
     bool isExplosion(RE::FormID a_formId) { 
@@ -100,5 +100,29 @@ namespace Functions {
                 return false;
                 break;
         }
+    }
+
+    void DispelInvisibility(RE::Actor* a_actor, bool a_force) {
+        std::vector<RE::ActiveEffect*> queued;
+        a_actor->AsMagicTarget()->VisitActiveEffects([&](RE::ActiveEffect* effect) {
+            const auto setting = effect ? effect->GetBaseObject() : nullptr;
+            if (setting && setting->HasArchetype(RE::EffectArchetypes::ArchetypeID::kInvisibility)) {
+                queued.push_back(effect);
+            }
+            return RE::BSContainer::ForEachResult::kContinue;
+        });
+        for (const auto& effect : queued) {
+            effect->Dispel(a_force);
+        }
+    }
+
+    // prevent the explosion if we are preventing hits and source is not an explosion
+    // otherwise, allow if the source is an explosion and the chain explosion is allowed or is a soulgem, and
+    // if the player is the cause, or the cause is somebody other than the player and we are not only registering player hits
+    bool explosionAllowed(RE::FormID source, RE::TESObjectREFRPtr target, RE::TESObjectREFRPtr cause) {
+        return !(Config::ini.GetBoolValue("Settings", "preventHits") && !isExplosion(source)) &&
+               ((isExplosion(source) && allowChainExplosion(source)) ||
+                HasKeyword(target->GetBaseObject(), "VendorItemSoulGem")) &&
+               ((Config::onlyPlayerHits && cause == nullptr || (cause != nullptr && cause->IsPlayerRef())) || !Config::onlyPlayerHits);
     }
 }

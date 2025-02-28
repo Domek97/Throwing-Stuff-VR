@@ -2,6 +2,7 @@
 
 #include "../Include/BombHandler.h"
 #include "../Include/Functions.h"
+#include "../Include/Config.h"
 
 namespace BombHandler {
     bool heartstoneHit = false;
@@ -77,14 +78,12 @@ namespace BombHandler {
     // target: the actor that will drink the potion
     // cause: the actor that caused the potion to explode
     void CastPotion(RE::AlchemyItem* a_potion, RE::TESObjectREFR& a_target, RE::Actor* a_cause) {
-        RE::FormID formID = a_target.GetFormID();
-
         RE::Actor* targetActor = a_target.As<RE::Actor>();
         if (targetActor != NULL && a_cause != NULL) {
             a_cause->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)
                 ->CastSpellImmediate(a_potion, false, targetActor, 1.0f, false, 0.0f, nullptr);
             if (a_cause->IsPlayerRef() && !targetActor->IsPlayerRef() &&
-                (!targetActor->IsPlayerTeammate() || Functions::followersGetAngry) && a_potion->hostileCount > 0) {
+                (!targetActor->IsPlayerTeammate() || Config::followersGetAngry) && a_potion->hostileCount > 0) {
                 a_cause->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)
                     ->CastSpellImmediate(Functions::BlameSpell, false, targetActor, 1.0f, false, 0.0f, nullptr);
             }
@@ -95,7 +94,7 @@ namespace BombHandler {
         a_objectRef->Disable();
         a_objectRef->SetDelete(true);
         // blame player for harming others' belongings
-        if (!a_objectRef->IsAnOwner(RE::PlayerCharacter::GetSingleton(), true, false) && Functions::breakingIsCrime) {
+        if (!a_objectRef->IsAnOwner(RE::PlayerCharacter::GetSingleton(), true, false) && Config::breakingIsCrime) {
             RE::PlayerCharacter::GetSingleton()->StealAlarm(a_objectRef.get(), a_objectRef->GetBaseObject(),
                                                             a_objectRef.get()->extraList.GetCount(), 0,
                                                             a_objectRef->GetActorOwner(), false);
@@ -131,13 +130,13 @@ namespace BombHandler {
                 std::random_device rd;
                 std::mt19937 gen(rd());
                 int i = 0;
-                int amount;
+                int amount = 0;
                 switch (expType) {
                     case 0:  // alcohol
                         RE::TES::GetSingleton()->ForEachReferenceInRange(bomb.get(), 200.0, [&](RE::TESObjectREFR& a_ref) {
                                 RE::Actor* targetActor = a_ref.As<RE::Actor>();
                                 if (targetActor != nullptr && a_cause->IsPlayerRef() && !targetActor->IsPlayerRef() &&
-                                    (!targetActor->IsPlayerTeammate() || Functions::followersGetAngry)) {
+                                    (!targetActor->IsPlayerTeammate() || Config::followersGetAngry)) {
                                     a_cause->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)
                                         ->CastSpellImmediate(Functions::BlameSpell, false, targetActor, 1.0f, false,0.0f, nullptr);
                                 }
